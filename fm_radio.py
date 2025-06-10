@@ -16,7 +16,7 @@ class Radio:
         self.SetFrequency(NewFrequency)
         self.SetMute(NewMute)
 
-        self.i2c_sda = Pin(24)
+        self.i2c_sda = Pin(26)
         self.i2c_scl = Pin(27)
 
         self.i2c_device = 1
