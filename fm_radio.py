@@ -1,5 +1,7 @@
 from machine import Pin, I2C
 import time
+import sys
+import select
 
 # Setup push button on GPIO 0 with pull-up resistor
 button = Pin(0, Pin.IN, Pin.PULL_UP)
@@ -87,11 +89,13 @@ class Radio:
         StereoStatus = (self.RadioStatus[0x00] & 0x04) != 0x00
         return MuteStatus, VolumeStatus, FrequencyStatus, StereoStatus
 
-# --- MAIN PROGRAM STARTS HERE ---
-fm_radio = Radio(100.3, 2, False)
 
-while True:
-    # --- Button Volume Increase Logic ---
+# --- MAIN PROGRAM STARTS HERE ---
+fm_radio = Radio(101.9, 2, False)
+
+
+def poll_button(fm_radio):
+    global last_button_state
     current_state = button.value()
     if last_button_state == 1 and current_state == 0:
         print("Button Pressed: Increasing Volume")
@@ -101,46 +105,62 @@ while True:
             print("Volume increased to", fm_radio.Volume)
         else:
             print("Volume already at max (15)")
+        time.sleep(0.5)  # debounce
     last_button_state = current_state
 
-    # --- Menu UI ---
+
+# --- Main interactive loop ---
+while True:
     print("\nECE 299 FM Radio Demo Menu")
     print("1 - change radio frequency")
     print("2 - change volume level")
     print("3 - mute audio")
     print("4 - read current settings")
-    select = input("Enter menu number > ")
+    print("Enter menu number > ", end="")
 
-    if select == "1":
+    user_input = ""
+    while True:
+        poll_button(fm_radio)
+
+        ready = select.select([sys.stdin], [], [], 0)
+        if ready and sys.stdin in ready[0]:
+            user_input = sys.stdin.readline().strip()
+            break
+
+        time.sleep(0.05)
+
+    select_option = user_input
+
+    # --- Handle Menu Selection ---
+    if select_option == "1":
         Frequency = input("Enter frequency in MHz (e.g., 100.3) > ")
         if fm_radio.SetFrequency(Frequency):
             fm_radio.ProgramRadio()
         else:
-            print("Invalid frequency (Range is 88.0 to 108.0)")
+            print("Invalid frequency")
 
-    elif select == "2":
-        Volume = input("Enter volume level (0 to 15, 15 is loud) > ")
+    elif select_option == "2":
+        Volume = input("Enter volume level (0 to 15) > ")
         if fm_radio.SetVolume(Volume):
             fm_radio.ProgramRadio()
         else:
-            print("Invalid volume level (Range is 0 to 15)")
+            print("Invalid volume")
 
-    elif select == "3":
+    elif select_option == "3":
         Mute = input("Enter mute (1 for Mute, 0 for Audio) > ")
         if fm_radio.SetMute(Mute):
             fm_radio.ProgramRadio()
         else:
             print("Invalid mute setting")
 
-    elif select == "4":
+    elif select_option == "4":
         Settings = fm_radio.GetSettings()
-        print("\nRadio Status\n")
+        print("\nRadio Status")
         print("Mute:", "enabled" if Settings[0] else "disabled")
-        print("Volume: %d" % Settings[1])
+        print("Volume:", Settings[1])
         print("Frequency: %5.1f MHz" % Settings[2])
         print("Mode:", "stereo" if Settings[3] else "mono")
-
     else:
-        print("Invalid menu option")
+        print("Invalid option")
 
-    time.sleep(0.05)  # button debounce
+    time.sleep(0.05)
