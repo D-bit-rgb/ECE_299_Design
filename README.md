@@ -2,7 +2,7 @@
 
 This repository contains the design files, source code, and schematics for an FM Clock Radio project developed for ECE 299 at the University of Victoria. The project showcases integration of radio frequency circuitry, 3D design, and embedded software to create a functional radio prototype.
 
-![3D Prototype](Clock-Radio_Prototype.jpg)
+![3D Prototype](Clock-Radio_Final_Submission.jpg)
 
 ---
 
