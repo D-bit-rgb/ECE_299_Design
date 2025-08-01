@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"name": "ECE 299",
+			"path": "../.."
+		},
+		{
+			"name": "serial:/COM6",
+			"uri": "serial://com6/"
+		}
+	]
+}
